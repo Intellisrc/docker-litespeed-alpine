@@ -1,0 +1,42 @@
+#!/bin/bash
+# Will launch partial container
+#"Usage: $0 <HASH> [keep]"
+#"Usage: $0 cont <NAME>"
+#"Usage: $0 image <NAME>"
+
+_type="$1"
+img="$2"
+if [[ $1 == "" ]]; then
+	img=$(basename $(dirname $(realpath "$0")))
+	docker build -t $img .
+	_type="image"
+fi
+keep=false
+remove=false
+case $_type in
+    "image" | "img") 
+	  cont="inspecting"
+	;;
+    "cont" | "container")
+      cont=$(docker ps -aqf "name=^$img$")
+      img="inspecting"
+      docker commit $cont $img
+	  cont="$img"
+      remove=true
+    ;;
+    *) # Using HASH
+      img="inspecting"
+      docker commit $_type $img
+	  cont="$img"
+      remove=true
+esac
+
+docker run -it --name $cont --entrypoint /bin/bash --rm $img
+
+if [[ $remove == true ]]; then
+  docker image rm $img
+fi
+
+if [[ $keep != true ]]; then
+  docker rm $cont
+fi

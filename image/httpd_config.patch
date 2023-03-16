@@ -1,0 +1,91 @@
+--- httpd_config.conf	2023-03-06 13:40:40.746744399 +0900
++++ httpd_config-custom.conf	2023-03-06 15:42:21.387889928 +0900
+@@ -18,7 +18,7 @@
+ showVersionNumber                0 
+ adminEmails                      root@localhost
+ indexFiles                       index.html, index.php
+-disableWebAdmin                  0
++disableWebAdmin                  1
+ 
+ errorlog logs/error.log {
+         logLevel             DEBUG
+@@ -111,8 +111,8 @@
+     priority                                0 
+     CPUSoftLimit                            10 
+     CPUHardLimit                            50 
+-    memSoftLimit                            1460M
+-    memHardLimit                            1470M
++    memSoftLimit							SOFT_LIMIT
++    memHardLimit							HARD_LIMIT
+     procSoftLimit                           400 
+     procHardLimit                           450 
+ }
+@@ -138,8 +138,8 @@
+     backlog                         100 
+     instances                       1 
+     priority                        0 
+-    memSoftLimit                    2047M 
+-    memHardLimit                    2047M 
++    memSoftLimit					SOFT_LIMIT
++    memHardLimit					HARD_LIMIT
+     procSoftLimit                   1400 
+     procHardLimit                   1500 
+ }
+@@ -161,8 +161,8 @@
+     runOnStartUp             3
+     extMaxIdleTime           300
+     priority                 3 
+-    memSoftLimit             2047M 
+-    memHardLimit             2047M 
++    memSoftLimit             SOFT_LIMIT
++    memHardLimit             HARD_LIMIT
+     procSoftLimit            500 
+     procHardLimit            600 
+ }
+@@ -180,8 +180,8 @@
+     runOnStartUp             3
+     extMaxIdleTime           300
+     priority                 3 
+-    memSoftLimit             2047M 
+-    memHardLimit             2047M 
++    memSoftLimit             SOFT_LIMIT
++    memHardLimit             HARD_LIMIT
+     procSoftLimit            500 
+     procHardLimit            600 
+ }
+@@ -199,14 +199,14 @@
+     runOnStartUp             3
+     extMaxIdleTime           300
+     priority                 3 
+-    memSoftLimit             2047M 
+-    memHardLimit             2047M 
++    memSoftLimit             SOFT_LIMIT
++    memHardLimit             HARD_LIMIT
+     procSoftLimit            500 
+     procHardLimit            600 
+ }
+ 
+-virtualHost Example{
+-    vhRoot                   Example/
++virtualHost WP{
++    vhRoot                   /var/www/
+     allowSymbolLink          1 
+     enableScript             1 
+     restrained               1 
+@@ -214,13 +214,13 @@
+     smartKeepAlive                  
+     setUIDMode               0 
+     chrootMode               0 
+-    configFile               conf/vhosts/Example/vhconf.conf
++    configFile               conf/vhosts/default.conf
+ }
+ 
+ listener Default{
+-    address                  *:8088
++    address                  *:80
+     secure                   0
+-    map                      Example *
++    map                      WP *
+ }
+     
+ vhTemplate centralConfigLog{
