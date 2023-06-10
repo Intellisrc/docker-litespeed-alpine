@@ -29,7 +29,10 @@ rm -rf "$ls_root/Example"
 rm -rf "$ls_root/conf/vhosts/Example"
 rm -rf "$ls_root/logs/Example"
 
-init_script=${INIT_SCRIPT:-"/var/www/init.sh"}
+init_script=${INIT_SCRIPT:-"/home/init.sh"}
+if [[ ! -f $init_script ]]; then
+	init_script="/var/www/init.sh";
+fi
 if [[ -f "$init_script" ]]; then
     echo "Starting custom script..."
     chmod +rx "$init_script"
