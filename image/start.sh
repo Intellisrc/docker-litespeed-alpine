@@ -4,18 +4,23 @@ case $OBJ_CACHE in
 	"memcached" )
 		apk add --update --no-cache memcached php$PHP_VER-pecl-memcached
 		memcached -d -u litespeed
-		rm -rf /var/cache/apk/*
 	;;
 	"redis" )
 		apk add --update --no-cache redis
 		redis-server &
-		rm -rf /var/cache/apk/*
 	;;
 esac
+case $USE_DB in
+	"mysql" | "mariadb" )
+		apk add --update --no-cache php$PHP_VER-mysqli 
+	;;
+esac
+rm -rf /var/cache/apk/*
 
 install=false
 
 # LiteSpeed setup:
+adduser -D -H -h /var/www/ litespeed
 echo "Starting litespeed...."
 ls_root="/var/lib/litespeed"
 ls_conf="/etc/litespeed/httpd_config.conf"
@@ -24,12 +29,17 @@ rm /etc/litespeed/httpd_config.patch
 sed -i "s/SOFT_LIMIT/$LS_SOFT_LIMIT/g" "$ls_conf"
 sed -i "s/HARD_LIMIT/$LS_HARD_LIMIT/g" "$ls_conf"
 mkdir -p "$ls_root/sessions/"
-chown litespeed.litespeed "$ls_root/sessions/"
+chown litespeed:litespeed "$ls_root/sessions/"
 
 # PHP setup:
 php_ini="/etc/php${PHP_VER}/php.ini"
 sed -i "s/upload_max_filesize = 2M/upload_max_filesize = $PHP_MAX_UPLOAD/" "$php_ini"
 sed -i "s/post_max_size = 8M/post_max_size = $PHP_MAX_UPLOAD/" "$php_ini"
+case $USE_DB in
+	"mysql" | "mariadb" )
+		sed -i "s/;extension=mysqli/extension=mysqli/" "$php_ini"
+	;;
+esac
 
 # Remove Example data
 rm -rf "$ls_root/Example"
@@ -47,11 +57,10 @@ if [[ -f "$init_script" ]]; then
     chmod -rwx "$init_script"
     echo "Custom script executed."
 else
-    echo "INFO: You can customize this site by adding 'init.sh' script under 'wp-content' directory";
+    echo "INFO: You can customize this site by adding 'init.sh' script under 'home' or 'www' directory";
 fi
 
 apk del patch
-"$ls_root/bin/lswsctrl" start
-#while pgrep litespeed > /dev/null; do
-tail -f /var/log/litespeed/error.log
-#done
+mkdir -p /var/log/litespeed/
+chown litespeed:litespeed /var/log/litespeed/
+#/usr/bin/lsphp$PHP_VER -c "$php_ini"

@@ -1,0 +1,1 @@
+This branch is broken because openlitespeed seems to not be supported in Alpine (eventhough phpX-litespeed exists, it seems that we miss the main binary).
