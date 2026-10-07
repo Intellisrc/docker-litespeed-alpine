@@ -3,8 +3,9 @@ FROM intellisrc/alpine:3.24
 EXPOSE 80
 VOLUME ["/var/www"]
 
-# OpenLiteSpeed version (installed from the official binary release)
-ENV OLS_VER=1.9.3
+# OpenLiteSpeed version to install on start-up (e.g.: 1.9.3 or v1.9.3).
+# When empty, the latest official release is detected and installed automatically.
+ENV OLS_VER=
 
 ENV DB_NAME=
 ENV DB_USER=
@@ -21,25 +22,22 @@ ENV USE_DB=none
 ENV PHP_VER=83
 
 # Alpine does not package the OpenLiteSpeed server (only the lsphp SAPI),
-# so the official binary release is installed and executed through gcompat
-# (the glibc compatibility layer for musl).
+# so the official binary release is installed on start-up (see start.sh) and
+# executed through gcompat (the glibc compatibility layer for musl).
 RUN apk add --update --no-cache \
-	curl gcompat patch php$PHP_VER-litespeed \
+	curl gcompat patch shadow php$PHP_VER-litespeed \
 	php$PHP_VER-curl php$PHP_VER-gd php$PHP_VER-mbstring php$PHP_VER-exif php$PHP_VER-ctype \
 	php$PHP_VER-fileinfo php$PHP_VER-intl php$PHP_VER-zip php$PHP_VER-iconv php$PHP_VER-dom \
-	php$PHP_VER-session php$PHP_VER-opcache && \
+	php$PHP_VER-openssl php$PHP_VER-phar php$PHP_VER-tokenizer php$PHP_VER-xml php$PHP_VER-simplexml \
+	php$PHP_VER-xmlreader php$PHP_VER-xmlwriter php$PHP_VER-session php$PHP_VER-opcache && \
 	apk upgrade && \
-	curl -sSL -o /tmp/ols.tgz \
-		https://openlitespeed.org/packages/openlitespeed-$OLS_VER-$(uname -m)-linux.tgz && \
-	tar -xzf /tmp/ols.tgz -C /usr/local && \
-	mv /usr/local/openlitespeed /usr/local/lsws && rm /tmp/ols.tgz && \
 	adduser -D -H -h /var/www/ litespeed && \
 	adduser -D -H -s /sbin/nologin -h /usr/local/lsws/admin/ -g "LiteSpeed Web Server Admin" lsadm && \
+	mkdir -p /usr/local/lsws/conf/vhosts /usr/local/lsws/fcgi-bin \
+		/var/log/litespeed /var/lib/litespeed/sessions /tmp/lshttpd && \
 	ln -s /usr/bin/lsphp$PHP_VER /usr/local/lsws/fcgi-bin/lsphp && \
 	ln -s /var/log/litespeed /usr/local/lsws/logs && \
-	mkdir -p /var/log/litespeed /var/lib/litespeed/sessions /tmp/lshttpd && \
 	chown -R litespeed:litespeed /var/log/litespeed /var/lib/litespeed && \
-	rm -rf /usr/local/lsws/Example /usr/local/lsws/conf/vhosts/Example \
 	rm -rf /var/cache/apk/*
 
 COPY httpd_config.conf /usr/local/lsws/conf/httpd_config.conf
