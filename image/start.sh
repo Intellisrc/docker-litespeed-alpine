@@ -20,21 +20,20 @@ rm -rf /var/cache/apk/*
 install=false
 
 # LiteSpeed setup:
-adduser -D -H -h /var/www/ litespeed
-echo "Starting litespeed...."
-ls_root="/var/lib/litespeed"
+ls_root="/usr/local/lsws"
 ls_conf="/etc/litespeed/httpd_config.conf"
-patch -u "$ls_conf" -i /etc/litespeed/httpd_config.patch
-rm /etc/litespeed/httpd_config.patch
+ls_data="/var/lib/litespeed"
 sed -i "s/SOFT_LIMIT/$LS_SOFT_LIMIT/g" "$ls_conf"
 sed -i "s/HARD_LIMIT/$LS_HARD_LIMIT/g" "$ls_conf"
-mkdir -p "$ls_root/sessions/"
-chown litespeed:litespeed "$ls_root/sessions/"
+mkdir -p "$ls_data/sessions/"
+chown litespeed:litespeed "$ls_data/sessions/"
 
 # PHP setup:
 php_ini="/etc/php${PHP_VER}/php.ini"
-sed -i "s/upload_max_filesize = 2M/upload_max_filesize = $PHP_MAX_UPLOAD/" "$php_ini"
-sed -i "s/post_max_size = 8M/post_max_size = $PHP_MAX_UPLOAD/" "$php_ini"
+if [[ -n $PHP_MAX_UPLOAD ]]; then
+	sed -i "s/upload_max_filesize = 2M/upload_max_filesize = $PHP_MAX_UPLOAD/" "$php_ini"
+	sed -i "s/post_max_size = 8M/post_max_size = $PHP_MAX_UPLOAD/" "$php_ini"
+fi
 case $USE_DB in
 	"mysql" | "mariadb" )
 		sed -i "s/;extension=mysqli/extension=mysqli/" "$php_ini"
@@ -60,7 +59,7 @@ else
     echo "INFO: You can customize this site by adding 'init.sh' script under 'home' or 'www' directory";
 fi
 
-apk del patch
 mkdir -p /var/log/litespeed/
 chown litespeed:litespeed /var/log/litespeed/
-#/usr/bin/lsphp$PHP_VER -c "$php_ini"
+echo "Starting litespeed...."
+exec "$ls_root/bin/openlitespeed" -d
